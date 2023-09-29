@@ -16,6 +16,10 @@
 # You should have received a copy of the GNU General Public License
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
+from __future__ import annotations
+
+from typing import Union
+
 import numpy as np
 import dask.array as da
 from scipy.ndimage import gaussian_filter
@@ -29,7 +33,9 @@ from pyxem.dummy_data import make_diffraction_test_data as mdtd
 from pyxem.signals import DPCSignal2D, Diffraction2D, LazyDiffraction2D
 
 
-def get_disk_shift_simple_test_signal(lazy=False):
+def get_disk_shift_simple_test_signal(
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get HyperSpy 2D signal with 2D navigation dimensions for DPC testing.
 
     Probe size x/y (20, 20), and image size x/y (50, 50).
@@ -69,7 +75,9 @@ def get_disk_shift_simple_test_signal(lazy=False):
     return s
 
 
-def get_holz_simple_test_signal(lazy=False):
+def get_holz_simple_test_signal(
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get HyperSpy 2D signal with 2D navigation dimensions for HOLZ testing.
 
     Probe size x/y (20, 20), and image size x/y (50, 50).
@@ -114,7 +122,9 @@ def get_holz_simple_test_signal(lazy=False):
     return s
 
 
-def get_holz_heterostructure_test_signal(lazy=False):
+def get_holz_heterostructure_test_signal(
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get HyperSpy 2D signal with 2D navigation dimensions for HOLZ testing.
 
     The centre, radius and intensity of the ring varies as a function of probe
@@ -166,7 +176,7 @@ def get_holz_heterostructure_test_signal(lazy=False):
     return s
 
 
-def get_single_ring_diffraction_signal():
+def get_single_ring_diffraction_signal() -> Diffraction2D:
     """Get HyperSpy 2D signal with a single ring with centre position.
 
     The ring has a centre at x=105 and y=67, and radius=40.
@@ -179,7 +189,9 @@ def get_single_ring_diffraction_signal():
     return s
 
 
-def get_dead_pixel_signal(lazy=False):
+def get_dead_pixel_signal(
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get Diffraction2D signal with a disk in the middle.
 
     Has 4 pixels with value equal to 0, to simulate dead pixels.
@@ -210,7 +222,7 @@ def get_dead_pixel_signal(lazy=False):
     return s
 
 
-def get_hot_pixel_signal(lazy=False):
+def get_hot_pixel_signal(lazy=False) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get Diffraction2D signal with a disk in the middle.
 
     Has 4 pixels with value equal to 50000, to simulate hot pixels.
@@ -241,7 +253,7 @@ def get_hot_pixel_signal(lazy=False):
     return s
 
 
-def get_simple_dpc_signal():
+def get_simple_dpc_signal() -> DPCSignal2D:
     """Get a simple DPCSignal2D with a zero point in the centre.
 
     Example
@@ -254,7 +266,7 @@ def get_simple_dpc_signal():
     return s
 
 
-def get_stripe_pattern_dpc_signal():
+def get_stripe_pattern_dpc_signal() -> DPCSignal2D:
     """Get a 2D DPC signal with a stripe pattern.
 
     The stripe pattern only has an x-component, with alternating left/right
@@ -278,7 +290,7 @@ def get_stripe_pattern_dpc_signal():
     return s
 
 
-def get_square_dpc_signal(add_ramp=False):
+def get_square_dpc_signal(add_ramp: bool = False) -> DPCSignal2D:
     """Get a 2D DPC signal resembling a Landau domain.
 
     Parameters
@@ -327,7 +339,7 @@ def get_square_dpc_signal(add_ramp=False):
     return s
 
 
-def get_fem_signal(lazy=False):
+def get_fem_signal(lazy: bool = False) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Get a 2D signal approximating a fluctuation electron microscopy (FEM) dataset.
 
     Parameters
@@ -419,7 +431,9 @@ def get_fem_signal(lazy=False):
     return fem_signal
 
 
-def get_simple_fem_signal(lazy=False):
+def get_simple_fem_signal(
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """2D signal approximating a very small fluctuation electron microscopy (FEM) dataset.
 
     Parameters
@@ -513,7 +527,13 @@ def get_simple_fem_signal(lazy=False):
     return fem_signal
 
 
-def get_generic_fem_signal(probe_x=2, probe_y=2, image_x=50, image_y=50, lazy=False):
+def get_generic_fem_signal(
+    probe_x: int = 2,
+    probe_y: int = 2,
+    image_x: int = 50,
+    image_y: int = 50,
+    lazy: bool = False,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """2D signal approximating a fluctuation electron microscopy (FEM) dataset with user defined dimensions.
 
     Parameters
@@ -616,7 +636,7 @@ def get_generic_fem_signal(probe_x=2, probe_y=2, image_x=50, image_y=50, lazy=Fa
     return fem_signal
 
 
-def get_cbed_signal():
+def get_cbed_signal() -> Diffraction2D:
     """Get artificial pixelated STEM signal similar to CBED data.
 
     Returns
@@ -663,12 +683,12 @@ def get_cbed_signal():
     return s_cbed
 
 
-def get_simple_ellipse_signal_peak_array():
+def get_simple_ellipse_signal_peak_array() -> tuple[Diffraction2D, np.ndarray]:
     """Get a signal and peak array of an ellipse.
 
     Returns
     -------
-    signal, peak_array : HyperSpy Signal2D, NumPy array
+    signal, peak_array : Diffraction2D, NumPy array
 
     Examples
     --------
@@ -686,7 +706,7 @@ def get_simple_ellipse_signal_peak_array():
     return s, peak_array
 
 
-def get_nanobeam_electron_diffraction_signal():
+def get_nanobeam_electron_diffraction_signal() -> Diffraction2D:
     """Get a signal emulating a NBED dataset.
 
     Returns

@@ -15,6 +15,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
+from __future__ import annotations
+from typing import Union, Optional
 
 import numpy as np
 from tqdm import tqdm
@@ -29,7 +31,15 @@ from pyxem.signals import Diffraction2D, LazyDiffraction2D
 import pyxem.utils.ransac_ellipse_tools as ret
 
 
-def _get_elliptical_disk(xx, yy, x, y, semi_len0, semi_len1, rotation):
+def _get_elliptical_disk(
+    xx: np.ndarray,
+    yy: np.ndarray,
+    x: float,
+    y: float,
+    semi_len0: float,
+    semi_len1: float,
+    rotation: float,
+) -> np.ndarray:
     """Private function to generate an elliptical disk.
 
     Parameters
@@ -70,7 +80,16 @@ def _get_elliptical_disk(xx, yy, x, y, semi_len0, semi_len1, rotation):
     return elli_mask
 
 
-def _get_elliptical_ring(xx, yy, x, y, semi_len0, semi_len1, rotation, lw_r=1):
+def _get_elliptical_ring(
+    xx: np.ndarray,
+    yy: np.ndarray,
+    x: float,
+    y: float,
+    semi_len0: float,
+    semi_len1: float,
+    rotation: float,
+    lw_r: float = 1,
+) -> np.ndarray:
     """Private function to generate an elliptical ring.
 
     Parameters
@@ -141,7 +160,16 @@ class EllipseRing:
     """
 
     def __init__(
-        self, xx, yy, x0, y0, semi_len0, semi_len1, rotation, intensity, lw_r=1
+        self,
+        xx: int,
+        yy: int,
+        x0: float,
+        y0: float,
+        semi_len0: float,
+        semi_len1: float,
+        rotation: float,
+        intensity: float,
+        lw_r: float = 1,
     ):
         self.x0, self.y0 = x0, y0
         self.semi_len0 = semi_len0
@@ -151,7 +179,7 @@ class EllipseRing:
         self.xx, self.yy = xx, yy
         self.lw_r = lw_r
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return (
             "<%s, ((x0, y0): (%s, %s), (sl0, sl1): (%s, %s),"
             " r: %s, I: %s, lw: %s)>"
@@ -167,7 +195,7 @@ class EllipseRing:
             )
         )
 
-    def get_signal(self):
+    def get_signal(self) -> np.ndarray:
         ellipse = _get_elliptical_ring(
             xx=self.xx,
             yy=self.yy,
@@ -210,7 +238,17 @@ class EllipseDisk:
 
     """
 
-    def __init__(self, xx, yy, x0, y0, semi_len0, semi_len1, rotation, intensity):
+    def __init__(
+        self,
+        xx: int,
+        yy: int,
+        x0: float,
+        y0: float,
+        semi_len0: float,
+        semi_len1: float,
+        rotation: float,
+        intensity: float,
+    ):
         self.x0, self.y0 = x0, y0
         self.semi_len0 = semi_len0
         self.semi_len1 = semi_len1
@@ -218,7 +256,7 @@ class EllipseDisk:
         self.intensity = intensity
         self.xx, self.yy = xx, yy
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, ((x0, y0): (%s, %s), (sl0, sl1): (%s, %s)," " r: %s, I: %s)>" % (
             self.__class__.__name__,
             self.x0,
@@ -229,7 +267,7 @@ class EllipseDisk:
             self.intensity,
         )
 
-    def get_signal(self):
+    def get_signal(self) -> np.ndarray:
         ellipse = _get_elliptical_disk(
             xx=self.xx,
             yy=self.yy,
@@ -244,7 +282,17 @@ class EllipseDisk:
 
 
 class Circle:
-    def __init__(self, xx, yy, x0, y0, r, intensity, scale, lw=None):
+    def __init__(
+        self,
+        xx: np.ndarray,
+        yy: np.ndarray,
+        x0: float,
+        y0: float,
+        r: float,
+        intensity: float,
+        scale: float,
+        lw: float = None,
+    ):
         self.x0 = x0
         self.y0 = y0
         self.r = r
@@ -254,7 +302,7 @@ class Circle:
         self.mask_outside_r(scale)
         self.get_centre_pixel(xx, yy, scale)
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, (r: %s, (x0, y0): (%s, %s), I: %s)>" % (
             self.__class__.__name__,
             self.r,
@@ -263,14 +311,14 @@ class Circle:
             self.intensity,
         )
 
-    def mask_outside_r(self, scale):
+    def mask_outside_r(self, scale: float):
         if self.lw is None:
             indices = self.circle >= (self.r + scale) ** 2
         else:
             indices = self.circle >= (self.r + self.lw + scale) ** 2
         self.circle[indices] = 0
 
-    def centre_on_image(self, xx, yy):
+    def centre_on_image(self, xx: np.ndarray, yy: np.ndarray) -> bool:
         if self.x0 < xx[0][0] or self.x0 > xx[0][-1]:
             return False
         elif self.y0 < yy[0][0] or self.y0 > yy[-1][-1]:
@@ -278,7 +326,7 @@ class Circle:
         else:
             return True
 
-    def get_centre_pixel(self, xx, yy, scale):
+    def get_centre_pixel(self, xx: np.ndarray, yy: np.ndarray, scale: float):
         """Sets the indices for the pixels on which the centre point is.
 
         Because the centre point can sometimes be exactly on the
@@ -306,12 +354,21 @@ class Circle:
 class Disk:
     """Disk object, with outer edge of the ring at r."""
 
-    def __init__(self, xx, yy, scale, x0, y0, r, intensity):
+    def __init__(
+        self,
+        xx: np.ndarray,
+        yy: np.ndarray,
+        scale: float,
+        x0: float,
+        y0: float,
+        r: float,
+        intensity: float,
+    ):
         self.z = Circle(xx, yy, x0, y0, r, intensity, scale)
         self.z.set_uniform_intensity()
         self.set_centre_intensity()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, (r: %s, (x0, y0): (%s, %s), I: %s)>" % (
             self.__class__.__name__,
             self.z.r,
@@ -329,7 +386,7 @@ class Disk:
             for y in self.z.centre_y_pixels:
                 self.z.circle[y, x] = self.z.intensity  # This is correct
 
-    def get_signal(self):
+    def get_signal(self) -> np.ndarray:
         return self.z.circle
 
 
@@ -341,7 +398,17 @@ class Ring:
 
     """
 
-    def __init__(self, xx, yy, scale, x0, y0, r, intensity, lr):
+    def __init__(
+        self,
+        xx: np.ndarray,
+        yy: np.ndarray,
+        scale: float,
+        x0: float,
+        y0: float,
+        r: float,
+        intensity: float,
+        lr: float,
+    ):
         if lr > r:
             raise ValueError(f"Ring line width too big ({lr} > {r})")
         self.lr = lr
@@ -350,7 +417,7 @@ class Ring:
         self.mask_inside_r(scale)
         self.z.set_uniform_intensity()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, (r: %s, (x0, y0): (%s, %s), I: %s)>" % (
             self.__class__.__name__,
             self.z.r,
@@ -359,11 +426,11 @@ class Ring:
             self.z.intensity,
         )
 
-    def mask_inside_r(self, scale):
+    def mask_inside_r(self, scale: float):
         indices = self.z.circle < (self.z.r - self.lr) ** 2
         self.z.circle[indices] = 0
 
-    def get_signal(self):
+    def get_signal(self) -> np.ndarray:
         return self.z.circle
 
 
@@ -422,13 +489,13 @@ class MakeTestData:
 
     def __init__(
         self,
-        size_x=100,
-        size_y=100,
-        scale=1,
-        default=False,
-        blur=True,
-        blur_sigma=1,
-        downscale=True,
+        size_x: float = 100,
+        size_y: float = 100,
+        scale: float = 1,
+        default: bool = False,
+        blur: bool = True,
+        blur_sigma: float = 1,
+        downscale: bool = True,
     ):
         self.scale = scale
         self.blur_on = blur
@@ -446,7 +513,7 @@ class MakeTestData:
         else:
             self.update_signal()
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, ((x, y): (%s, %s), s: %s, z: %s)>" % (
             self.__class__.__name__,
             self.size_x,
@@ -466,13 +533,21 @@ class MakeTestData:
         self.Y = np.arange(0, self.size_y, self.scale / self.downscale_factor)
         self.xx, self.yy = np.meshgrid(self.X, self.Y, sparse=True)
 
-    def add_disk(self, x0=50, y0=50, r=5, intensity=10):
+    def add_disk(
+        self, x0: float = 50, y0: float = 50, r: float = 5, intensity: float = 10
+    ):
         scale = self.scale / self.downscale_factor
         self.z_list.append(Disk(self.xx, self.yy, scale, x0, y0, r, intensity))
         self.update_signal()
 
     def add_disk_ellipse(
-        self, x0=50, y0=50, semi_len0=5, semi_len1=8, rotation=0.78, intensity=10
+        self,
+        x0: float = 50,
+        y0: float = 50,
+        semi_len0: float = 5,
+        semi_len1: float = 8,
+        rotation: float = 0.78,
+        intensity: float = 10,
     ):
         ellipse = EllipseDisk(
             xx=self.xx,
@@ -487,7 +562,14 @@ class MakeTestData:
         self.z_list.append(ellipse)
         self.update_signal()
 
-    def add_ring(self, x0=50, y0=50, r=20, intensity=10, lw_pix=0):
+    def add_ring(
+        self,
+        x0: float = 50,
+        y0: float = 50,
+        r: float = 20,
+        intensity: float = 10,
+        lw_pix: float = 0,
+    ):
         """
         Add a ring to the test data.
 
@@ -515,13 +597,13 @@ class MakeTestData:
 
     def add_ring_ellipse(
         self,
-        x0=50,
-        y0=50,
-        semi_len0=11,
-        semi_len1=13,
-        rotation=0.78,
-        intensity=10,
-        lw_r=2,
+        x0: float = 50,
+        y0: float = 50,
+        semi_len0: float = 11,
+        semi_len1: float = 13,
+        rotation: float = 0.78,
+        intensity: float = 10,
+        lw_r: float = 2,
     ):
         ellipse = EllipseRing(
             xx=self.xx,
@@ -581,35 +663,35 @@ class MakeTestData:
 
 
 def generate_4d_data(
-    probe_size_x=10,
-    probe_size_y=10,
-    image_size_x=50,
-    image_size_y=50,
-    disk_x=25,
-    disk_y=25,
-    disk_r=5,
-    disk_I=20,
-    ring_x=25,
-    ring_y=25,
-    ring_r=20,
-    ring_I=6,
-    ring_lw=0,
-    ring_e_x=None,
-    ring_e_y=25,
-    ring_e_semi_len0=15,
-    ring_e_semi_len1=15,
-    ring_e_r=0,
-    ring_e_I=6,
-    ring_e_lw=1,
-    blur=True,
-    blur_sigma=1,
-    downscale=True,
-    add_noise=False,
-    noise_amplitude=1,
-    lazy=False,
-    lazy_chunks=None,
-    show_progressbar=True,
-):
+    probe_size_x: int = 10,
+    probe_size_y: int = 10,
+    image_size_x: int = 50,
+    image_size_y: int = 50,
+    disk_x: Union[int, np.ndarray, None] = 25,
+    disk_y: Union[int, np.ndarray] = 25,
+    disk_r: Union[int, np.ndarray] = 5,
+    disk_I: Union[int, np.ndarray] = 20,
+    ring_x: Union[int, np.ndarray, None] = 25,
+    ring_y: Union[int, np.ndarray] = 25,
+    ring_r: Union[int, np.ndarray] = 20,
+    ring_I: Union[int, np.ndarray] = 6,
+    ring_lw: Union[int, np.ndarray] = 0,
+    ring_e_x: Union[int, np.ndarray, None] = None,
+    ring_e_y: Union[int, np.ndarray] = 25,
+    ring_e_semi_len0: Union[int, np.ndarray] = 15,
+    ring_e_semi_len1: Union[int, np.ndarray] = 15,
+    ring_e_r: Union[int, np.ndarray] = 0,
+    ring_e_I: Union[int, np.ndarray] = 6,
+    ring_e_lw: Union[int, np.ndarray] = 1,
+    blur: bool = True,
+    blur_sigma: int = 1,
+    downscale: bool = True,
+    add_noise: bool = False,
+    noise_amplitude: float = 1,
+    lazy: bool = False,
+    lazy_chunks: Union[None, int, tuple[int, ...]] = None,
+    show_progressbar: bool = True,
+) -> Union[Diffraction2D, LazyDiffraction2D]:
     """Generate a test dataset containing a disk and diffraction ring.
 
     Useful for checking that radial average algorithms are working
@@ -643,7 +725,7 @@ def generate_4d_data(
         See examples on how to make it the correct size.
     disk_I : int or NumPy 2D-array, default 20
         Intensity of the disk, for each of the pixels.
-        So if I=30, the each pixel in the disk will have a value of 30.
+        So if I=30, then each pixel in the disk will have a value of 30.
         Note, this value will change if blur=True or downscale=True.
     ring_x, ring_y : int or NumPy 2D-array, default 20
         Centre position of the ring. Either integer or NumPy 2-D array.
@@ -847,7 +929,14 @@ def generate_4d_data(
     return s
 
 
-def _make_4d_peak_array_test_data(xf, yf, semi0, semi1, rot, nt=20):
+def _make_4d_peak_array_test_data(
+    xf: np.ndarray,
+    yf: np.ndarray,
+    semi0: np.ndarray,
+    semi1: np.ndarray,
+    rot: np.ndarray,
+    nt: int = 20,
+) -> np.ndarray:
     """Get a 4D NumPy array with peak_array test data.
 
     Parameters
@@ -894,13 +983,13 @@ def _make_4d_peak_array_test_data(xf, yf, semi0, semi1, rot, nt=20):
 class DiffractionTestImage:
     def __init__(
         self,
-        disk_r=7,
-        blur=2,
-        image_x=256,
-        image_y=256,
-        rotation=0,
-        diff_intensity_reduction=1.0,
-        intensity_noise=0.5,
+        disk_r: int = 7,
+        blur: float = 2,
+        image_x: int = 256,
+        image_y: int = 256,
+        rotation: int = 0,
+        diff_intensity_reduction: float = 1.0,
+        intensity_noise: float = 0.5,
     ):
         """Make an artificial diffraction image, similar to NBED data.
 
@@ -967,7 +1056,7 @@ class DiffractionTestImage:
         self._y_list = []
         self._intensity_list = []
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, disks:%s, r:%s, rot:%s, im:(%s,%s)>" % (
             self.__class__.__name__,
             len(self._x_list),
@@ -977,7 +1066,7 @@ class DiffractionTestImage:
             self.image_y,
         )
 
-    def __copy__(self):
+    def __copy__(self) -> DiffractionTestImage:
         d = DiffractionTestImage(
             disk_r=self.disk_r,
             blur=self.blur,
@@ -994,10 +1083,10 @@ class DiffractionTestImage:
         d._intensity_list = self._intensity_list.copy()
         return d
 
-    def copy(self):
+    def copy(self) -> DiffractionTestImage:
         return self.__copy__()
 
-    def add_disk(self, x, y, intensity=1):
+    def add_disk(self, x: int, y: int, intensity: float = 1):
         if not isinstance(x, int):
             raise ValueError("x needs to be integer, not {0}".format(x))
         if not isinstance(y, int):
@@ -1006,11 +1095,11 @@ class DiffractionTestImage:
         self._y_list.append(y)
         self._intensity_list.append(intensity)
 
-    def add_background_lorentz(self, width=10, intensity=5):
+    def add_background_lorentz(self, width: float = 10, intensity: float = 5):
         self._background_lorentz_width = width
         self._background_lorentz_intensity = intensity
 
-    def _get_diff_intensity_reduction(self, dr, i):
+    def _get_diff_intensity_reduction(self, dr: float, i: float) -> float:
         r_max = np.hypot(self.image_x / 2, self.image_y / 2)
         if dr == 0.0:
             dr = 0.00000000001
@@ -1020,7 +1109,7 @@ class DiffractionTestImage:
             i_new = 0
         return i_new
 
-    def add_cubic_disks(self, vx, vy, intensity=1, n=1):
+    def add_cubic_disks(self, vx: int, vy: int, intensity: float = 1, n: int = 1):
         """Add disks in a cubic pattern around the centre point of the image.
 
         Parameters
@@ -1039,7 +1128,7 @@ class DiffractionTestImage:
                     y = int(round(vy * py + cy))
                     self.add_disk(x, y, intensity=intensity)
 
-    def _get_background_lorentz(self):
+    def _get_background_lorentz(self) -> np.ndarray:
         width = self._background_lorentz_width
         intensity = self._background_lorentz_intensity
         x = np.linspace(-width, width, self.image_y)
@@ -1050,7 +1139,7 @@ class DiffractionTestImage:
         b = 1 / (np.pi * (1 + np.hypot(YY, XX) ** 2)) * intensity
         return b
 
-    def get_diffraction_test_image(self, dtype=np.float32):
+    def get_diffraction_test_image(self, dtype=np.float32) -> np.ndarray:
         image_x, image_y = self.image_x, self.image_y
         cx, cy = image_x / 2, image_y / 2
         image = np.zeros((image_y, image_x), dtype=np.float32)
@@ -1073,7 +1162,7 @@ class DiffractionTestImage:
             image += noise
         return image
 
-    def get_signal(self):
+    def get_signal(self) -> Diffraction2D:
         s = Diffraction2D(self.get_diffraction_test_image())
         return s
 
@@ -1085,11 +1174,11 @@ class DiffractionTestImage:
 class DiffractionTestDataset:
     def __init__(
         self,
-        probe_x=10,
-        probe_y=10,
-        detector_x=256,
-        detector_y=256,
-        noise=0.5,
+        probe_x: int = 10,
+        probe_y: int = 10,
+        detector_x: int = 256,
+        detector_y: int = 256,
+        noise: float = 0.5,
         dtype=np.float32,
     ):
         """Make a 4-dimensional dataset similar to NBED.
@@ -1128,17 +1217,21 @@ class DiffractionTestDataset:
         self.detector_y = detector_y
         self.noise = noise
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "<%s, (%s)>" % (self.__class__.__name__, self.data.shape)
 
-    def add_diffraction_image(self, diffraction_test_image, position_array=None):
+    def add_diffraction_image(
+        self,
+        diffraction_test_image: DiffractionTestImage,
+        position_array: Optional[np.ndarray] = None,
+    ):
         """Add a diffraction image to all or a subset of the dataset.
 
         See the class docstring for example on how to use this.
 
         Parameters
         ----------
-        diffraction_test_image : DiffractionTestData
+        diffraction_test_image : DiffractionTestImage
         position_array : numpy.ndarray
             Boolean array, specifying which positions in the dataset
             the diffraction_test_image should be added to. Must have two
@@ -1157,7 +1250,7 @@ class DiffractionTestDataset:
                     image_noise = np.random.random((detector_x, detector_y))
                     self.data[ix, iy, :, :] += image_noise * self.noise
 
-    def get_signal(self):
+    def get_signal(self) -> Diffraction2D:
         s = Diffraction2D(self.data)
         return s
 
