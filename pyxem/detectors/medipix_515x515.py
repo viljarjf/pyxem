@@ -56,7 +56,7 @@ class Medipix515x515Detector(Detector):
         pixel2 = 55e-6  # 55 micron pixel size in y
         Detector.__init__(self, pixel1=pixel1, pixel2=pixel2)
 
-    def calc_mask(self):
+    def calc_mask(self)  -> np.ndarray:
         """Defines a function to define a mask of missing and uninterpretable
         pixels in the detector plane, following
         The missing segment is a 5-wide cross in the middle of the detector.
