@@ -25,7 +25,7 @@ from hyperspy.component import Component
 
 
 class ReducedIntensityCorrectionComponent(Component):
-    def __init__(self, a=0.0, b=0.0, c=0.0, d=0.0):
+    def __init__(self, a: float = 0.0, b: float = 0.0, c: float = 0.0, d: float = 0.0):
         """
         Parameters
         ----------

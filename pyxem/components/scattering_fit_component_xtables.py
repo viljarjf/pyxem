@@ -20,6 +20,8 @@ A HyperSpy fitting component to fit the independent atomic scattering
 background to a radial profile.
 
 """
+from __future__ import annotations
+
 import numpy as np
 
 from hyperspy.component import Component
@@ -27,7 +29,9 @@ from diffsims.utils.atomic_scattering_params import ATOMIC_SCATTERING_PARAMS
 
 
 class ScatteringFitComponentXTables(Component):
-    def __init__(self, elements, fracs, N=1.0, C=0.0):
+    def __init__(
+        self, elements: list[str], fracs: list[float], N: float = 1.0, C: float = 0.0
+    ):
         """
         A scattering component to fit background atomic scattering.
         Calculates the sum of the squares sum_squares = sum (ci * fi**2 )
