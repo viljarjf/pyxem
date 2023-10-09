@@ -18,11 +18,16 @@
 
 """Electron diffraction pattern calibration operations."""
 
+from __future__ import annotations
+from typing import Union, Optional
+
 import numpy as np
 from scipy.optimize import curve_fit
 from math import sin, cos
 import matplotlib.pyplot as plt
+from diffpy.structure import Structure
 
+from hyperspy.signal import Signal2D
 from hyperspy.roi import CircleROI, Line2DROI
 from hyperspy.misc.utils import stack as stack_method
 from diffsims.utils.ring_pattern_utils import (
@@ -32,7 +37,7 @@ from diffsims.utils.ring_pattern_utils import (
 )
 
 from pyxem.signals import ElectronDiffraction2D
-from pyxem.utils.pyfai_utils import get_azimuthal_integrator, _get_setup
+from pyxem.utils.pyfai_utils import get_azimuthal_integrator, _get_setup, AzimuthalIntegrator
 
 
 class CalibrationGenerator:
@@ -46,7 +51,7 @@ class CalibrationGenerator:
     """
 
     def __init__(
-        self, diffraction_pattern=None, grating_image=None, calibration_standard=None
+        self, diffraction_pattern: Optional[Signal2D] = None, grating_image: Optional[np.ndarray] = None, calibration_standard: Optional[Structure] = None
     ):
         """
         Parameters
@@ -73,7 +78,7 @@ class CalibrationGenerator:
         self.diffraction_calibration = None
         self.navigation_calibration = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         information_string = (
             "\n|Calibration Data|\n"
             + "=================\n"
@@ -88,7 +93,7 @@ class CalibrationGenerator:
         )
         return information_string
 
-    def to_ai(self, wavelength, **kwargs):
+    def to_ai(self, wavelength: float, **kwargs) -> AzimuthalIntegrator:
         sig_shape = np.shape(self.diffraction_pattern)
         unit = "k_A^-1"
         setup = _get_setup(wavelength, unit, self.diffraction_calibration)
@@ -106,15 +111,15 @@ class CalibrationGenerator:
 
     def get_elliptical_distortion(
         self,
-        mask_radius,
-        scale=100,
-        amplitude=1000,
-        spread=2,
-        direct_beam_amplitude=500,
-        asymmetry=1,
-        rotation=0,
-        center=None,
-    ):
+        mask_radius: int,
+        scale: float = 100,
+        amplitude: float = 1000,
+        spread: float = 2,
+        direct_beam_amplitude: float = 500,
+        asymmetry: float = 1,
+        rotation: float = 0,
+        center: Optional[list[int]] = None,
+    ) -> np.ndarray:
         """Determine elliptical distortion of the diffraction pattern.
 
         Parameters
@@ -197,7 +202,7 @@ class CalibrationGenerator:
         self.affine_matrix = affine
         return affine
 
-    def get_distortion_residuals(self, mask_radius, spread):
+    def get_distortion_residuals(self, mask_radius: int, spread: float) -> ElectronDiffraction2D:
         """Obtain residuals for experimental data and distortion corrected data
         with respect to a simulated symmetric ring pattern.
 
@@ -259,7 +264,7 @@ class CalibrationGenerator:
         return ElectronDiffraction2D(residuals)
 
     def plot_corrected_diffraction_pattern(
-        self, reference_circle=True, *args, **kwargs
+        self, reference_circle: bool = True, *args, **kwargs
     ):
         """Plot the distortion corrected diffraction pattern with an optional
         reference circle.
@@ -304,7 +309,7 @@ class CalibrationGenerator:
             circ = CircleROI(cx=size / 2, cy=size / 2, r=size / 5, r_inner=0)
             circ.add_widget(dpegm)
 
-    def get_diffraction_calibration(self, mask_length, linewidth):
+    def get_diffraction_calibration(self, mask_length: float, linewidth: float) -> float:
         """Determine the diffraction pattern pixel size calibration in units of
         reciprocal Angstroms per pixel.
 
@@ -370,7 +375,7 @@ class CalibrationGenerator:
 
         return dc[0]
 
-    def get_navigation_calibration(self, line_roi, x1, x2, n, xspace, *args, **kwargs):
+    def get_navigation_calibration(self, line_roi: Line2DROI, x1: float, x2: float, n: int, xspace: float, *args, **kwargs) -> float:
         """Determine the navigation space pixel size calibration, nm per pixel.
 
         Parameters
@@ -416,7 +421,7 @@ class CalibrationGenerator:
         self.navigation_calibration = x[0]
         return x[0]
 
-    def get_rotation_calibration(self, real_line, reciprocal_line):
+    def get_rotation_calibration(self, real_line: Line2DROI, reciprocal_line: Line2DROI) -> float:
         """Determine the rotation between real and reciprocal space coordinates.
 
         Parameters
@@ -436,7 +441,7 @@ class CalibrationGenerator:
         # Return rotation angle calibration
         return self.rotation_angle
 
-    def get_correction_matrix(self):
+    def get_correction_matrix(self) -> np.ndarray:
         """Determine the transformation matrix required to correct for
         diffraction pattern distortions and/or rotation between real and
         reciprocal space coordinates.
@@ -477,7 +482,7 @@ class CalibrationGenerator:
         return correction_matrix
 
     def plot_calibrated_data(
-        self, data_to_plot, line=None, unwrap=False, *args, **kwargs
+        self, data_to_plot: str, line: Optional[Line2DROI] = None, unwrap: bool = False, *args, **kwargs
     ):  # pragma: no cover
         """Plot calibrated data for visual inspection.
 
