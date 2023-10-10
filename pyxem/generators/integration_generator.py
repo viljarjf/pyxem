@@ -17,6 +17,8 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generating subpixel resolution on diffraction vectors."""
+from __future__ import annotations
+from typing import Optional, Union
 
 import numpy as np
 from skimage import morphology
@@ -31,10 +33,12 @@ import logging
 _logger = logging.getLogger(__name__)
 
 from pyxem.generators.subpixelrefinement_generator import _get_pixel_vectors
-from pyxem.signals import DiffractionVectors
+from pyxem.signals import DiffractionVectors, ElectronDiffraction2D
 
 
-def _get_intensities(z, vectors, radius=1):
+def _get_intensities(
+    z: np.ndarray, vectors: DiffractionVectors, radius: int = 1
+) -> np.ndarray:
     """Basic intensity integration routine, takes the maximum value at the
     given vector positions with the number of pixels given by `radius`.
 
@@ -63,12 +67,18 @@ def _get_intensities(z, vectors, radius=1):
     return np.array(intensities)
 
 
-def _take_ragged(z, indices, _axis=None, out=None, mode="raise"):
+def _take_ragged(
+    z: np.ndarray,
+    indices: np.ndarray,
+    _axis: Optional[int] = None,
+    out: Optional[np.ndarray] = None,
+    mode: str = "raise",
+):
     """Like `np.take` for ragged arrays, see `np.take` for documentation."""
     return np.take(z, indices, axis=_axis, out=out, mode=mode)
 
 
-def _get_largest_connected_region(segmentation):
+def _get_largest_connected_region(segmentation: np.ndarray) -> np.ndarray:
     """Take a binary segmentation image and return the largest connected area."""
     labels = label(segmentation)
     largest = np.argmax(np.bincount(labels.flat, weights=segmentation.flat))
@@ -76,15 +86,15 @@ def _get_largest_connected_region(segmentation):
 
 
 def _get_intensities_summation_method(
-    z,
-    vectors,
+    z: np.ndarray,
+    vectors: DiffractionVectors,
     box_inner: int = 7,
     box_outer: int = 10,
     n_min: int = 5,
     n_max: int = None,
-    snr_thresh=3.0,
+    snr_thresh: float = 3.0,
     verbose: bool = False,
-):
+) -> np.ndarray:
     """Integrate reflections using the summation method.
 
     Two boxes are defined, the inner box is used to define the
@@ -172,7 +182,7 @@ def _get_intensities_summation_method(
                 f"i: {i:.2f} | j: {j:.2f} | dX: {dX:.2f} | dY: {dY:.2f} | X: {X:.2f} | Y: {Y:.2f} "
             )
             # for debugging purposes
-            import matploltib.pyplot as plt
+            import matplotlib.pyplot as plt
 
             plt.imshow(signal)
             plt.plot(dY + box_inner, dX + box_inner, "r+")  # center_of_mass
@@ -207,7 +217,9 @@ class IntegrationGenerator:
         patterns.
     """
 
-    def __init__(self, dp, vectors):
+    def __init__(
+        self, dp: ElectronDiffraction2D, vectors: Union[DiffractionVectors, np.ndarray]
+    ):
         self.dp = dp
         self.vectors_init = vectors
         self.last_method = None
@@ -219,7 +231,7 @@ class IntegrationGenerator:
             dp=dp, vectors=vectors, calibration=self.calibration, center=self.center
         )
 
-    def extract_intensities(self, radius: int = 1):
+    def extract_intensities(self, radius: int = 1) -> BaseSignal:
         """Basic intensity integration routine, takes the maximum value at the
         given vector positions with the number of pixels given by `radius`.
 
@@ -249,7 +261,7 @@ class IntegrationGenerator:
         n_min: int = 5,
         n_max: int = 1000,
         snr_thresh: float = 3.0,
-    ):
+    ) -> DiffractionVectors:
         """Integrate reflections using the summation method. Two boxes are defined,
         the inner box is used to define the integration area. The outer box is used
         to calculate the average signal-to-noise ratio (SNR).

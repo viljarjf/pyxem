@@ -17,14 +17,21 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generating DisplacementGradientMaps from diffraction vectors."""
+from __future__ import annotations
+from typing import Optional, Union, Iterable
 
 import numpy as np
 from pyxem.signals.tensor_field import DisplacementGradientMap
+from hyperspy.signals import Signal2D
 
 
 def get_DisplacementGradientMap(
-    strained_vectors, unstrained_vectors, weights=None, return_residuals=False, **kwargs
-):
+    strained_vectors: Signal2D,
+    unstrained_vectors: np.ndarray,
+    weights: Optional[Iterable[float]] = None,
+    return_residuals: Optional[bool] = False,
+    **kwargs,
+) -> Union[DisplacementGradientMap, tuple[DisplacementGradientMap, Signal2D]]:
     r"""Calculates the displacement gradient tensor at each navigation position in a map.
 
     Compares vectors to determine the 2 x 2 matrix,
@@ -74,7 +81,7 @@ def get_DisplacementGradientMap(
         inplace=False,
         output_signal_size=(3, 3),
         output_dtype=np.float64,
-        **kwargs
+        **kwargs,
     )
 
     if return_residuals:
@@ -85,7 +92,7 @@ def get_DisplacementGradientMap(
             inplace=False,
             output_dtype=np.float64,
             return_residuals=True,
-            **kwargs
+            **kwargs,
         )
         return DisplacementGradientMap(D), R
     else:
@@ -93,8 +100,11 @@ def get_DisplacementGradientMap(
 
 
 def get_single_DisplacementGradientTensor(
-    Vs, Vu=None, weights=None, return_residuals=False
-):
+    Vs: np.ndarray,
+    Vu: Optional[np.ndarray] = None,
+    weights: Optional[Iterable[float]] = None,
+    return_residuals: Optional[bool] = False,
+) -> np.ndarray:
     r"""Calculates the displacement gradient tensor from a pairs of vectors.
 
     Determines the 2 x 2 matrix, :math:`\\mathbf(L)`, that maps unstrained

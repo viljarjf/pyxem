@@ -17,12 +17,16 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """VDF generator and associated tools."""
+from __future__ import annotations
+from typing import Optional, Union, Any, Iterable
+
 import numpy as np
 
 import hyperspy.api as hs
 
 from pyxem.signals.common_diffraction import OUT_SIGNAL_AXES_DOCSTRING
 from pyxem.utils.virtual_images_utils import normalize_virtual_images, get_vectors_mesh
+from pyxem.signals import Diffraction2D, VirtualDarkFieldImage, DiffractionVectors
 
 
 NORMALISE_DOCSTRING = """normalize : boolean
@@ -44,13 +48,18 @@ class VirtualImageGenerator:
 
     """
 
-    def __init__(self, signal, *args, **kwargs):
+    def __init__(self, signal: Diffraction2D, *args, **kwargs):
         self.signal = signal
         self.roi_list = []
 
     def get_concentric_virtual_images(
-        self, k_min, k_max, k_steps, normalize=False, out_signal_axes=None
-    ):
+        self,
+        k_min: float,
+        k_max: float,
+        k_steps: int,
+        normalize: bool = False,
+        out_signal_axes: Optional[Iterable[Union[int, str]]] = None,
+    ) -> VirtualDarkFieldImage:
         """
         Obtain the intensity scattered at each navigation position in an
         Diffraction2D Signal by summation over a series of concentric
@@ -107,13 +116,13 @@ class VirtualImageGenerator:
 
     def set_ROI_mesh(
         self,
-        vector1_norm,
-        vector2_norm,
-        vector_norm_max,
-        angle=0.0,
-        shear=0.0,
-        ROI_radius=None,
-    ):
+        vector1_norm: float,
+        vector2_norm: float,
+        vector_norm_max: float,
+        angle: float = 0.0,
+        shear: float = 0.0,
+        ROI_radius: Optional[float] = None,
+    ) -> None:
         """
         Set and display a mesh of ROI in the signal space. The ROIs are stored
         in the ``roi_list`` attribute and will be by the
@@ -164,7 +173,11 @@ class VirtualImageGenerator:
             roi.add_widget(self.signal, axes=self.signal.axes_manager.signal_axes)
             self.roi_list.append(roi)
 
-    def get_virtual_images_from_mesh(self, normalize=False, out_signal_axes=None):
+    def get_virtual_images_from_mesh(
+        self,
+        normalize: bool = False,
+        out_signal_axes: Optional[Iterable[Union[int, str]]] = None,
+    ) -> VirtualDarkFieldImage:
         """
         Obtain the intensity scattered at each navigation position in an
         Diffraction2D Signal by summation over the ROIs defined in the
@@ -205,8 +218,12 @@ class VirtualImageGenerator:
     )
 
     def _get_virtual_images(
-        self, roi_list, normalize, new_axis_dict, out_signal_axes=None
-    ):
+        self,
+        roi_list: Union[list[hs.roi.CircleRIO], list[list]],
+        normalize: bool,
+        new_axis_dict: dict[str, Any],
+        out_signal_axes: Optional[Iterable[Union[int, str]]] = None,
+    ) -> VirtualDarkFieldImage:
         """
         Obtain the intensity scattered at each navigation position in an
         Diffraction2D Signal by summation over the roi defined by the
@@ -273,7 +290,9 @@ class VirtualDarkFieldGenerator(VirtualImageGenerator):
 
     """
 
-    def __init__(self, signal, vectors, *args, **kwargs):
+    def __init__(
+        self, signal: Diffraction2D, vectors: DiffractionVectors, *args, **kwargs
+    ):
         super().__init__(signal)
         if len(vectors.axes_manager.signal_axes) == 0:
             unique_vectors = vectors.get_unique_vectors(*args, **kwargs)
@@ -283,8 +302,11 @@ class VirtualDarkFieldGenerator(VirtualImageGenerator):
         self.vectors = unique_vectors
 
     def get_virtual_dark_field_images(
-        self, radius, normalize=False, out_signal_axes=None
-    ):
+        self,
+        radius: float,
+        normalize: bool = False,
+        out_signal_axes: Optional[Iterable[Union[int, str]]] = None,
+    ) -> VirtualDarkFieldImage:
         """Obtain the intensity scattered to each diffraction vector at each
         navigation position in an Diffraction2D Signal by summation in a
         circular window of specified radius.

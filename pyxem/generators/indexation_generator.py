@@ -17,14 +17,24 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """Indexation generator and associated tools."""
+from __future__ import annotations
+from typing import Optional
 
 import numpy as np
 import lmfit
 from transforms3d.euler import mat2euler, euler2mat
 
 from diffsims.utils.sim_utils import get_electron_wavelength
+from diffsims.libraries.diffraction_library import DiffractionLibrary
+from diffsims.libraries.vector_library import DiffractionVectorLibrary
+from diffsims.libraries.structure_library import StructureLibrary
+from diffsims.sims.diffraction_simulation import ProfileSimulation
 
-from pyxem.signals import VectorMatchingResults
+from pyxem.signals import (
+    VectorMatchingResults,
+    ElectronDiffraction2D,
+    DiffractionVectors,
+)
 from pyxem.utils.indexation_utils import (
     index_magnitudes,
     match_vectors,
@@ -107,7 +117,9 @@ class AcceleratedIndexationGenerator:
     angle is 0. It is this angle that is optimized during indexation.
     """
 
-    def __init__(self, signal, diffraction_library):
+    def __init__(
+        self, signal: ElectronDiffraction2D, diffraction_library: DiffractionLibrary
+    ):
         # test that the first euler angle is always 0
 
         for phase in diffraction_library:
@@ -123,10 +135,10 @@ class AcceleratedIndexationGenerator:
 
     def correlate(
         self,
-        n_largest=5,
-        include_phases=None,
+        n_largest: int = 5,
+        include_phases: Optional[list[str]] = None,
         **kwargs,
-    ):
+    ) -> dict[str, np.ndarray]:
         """
         Correlates the library of simulated diffraction patterns with the
         electron diffraction signal.
@@ -202,12 +214,17 @@ class ProfileIndexationGenerator:
 
     """
 
-    def __init__(self, magnitudes, simulation, mapping=True):
+    def __init__(
+        self,
+        magnitudes: np.ndarray,
+        simulation: ProfileSimulation,
+        mapping: bool = True,
+    ):
         self.map = mapping
         self.magnitudes = magnitudes
         self.simulation = simulation
 
-    def index_peaks(self, tolerance=0.1, *args, **kwargs):
+    def index_peaks(self, tolerance: float = 0.1, *args, **kwargs) -> np.ndarray:
         """Assigns hkl indices to peaks in the diffraction profile.
 
         Parameters
@@ -233,20 +250,20 @@ class ProfileIndexationGenerator:
 
 
 def _refine_best_orientations(
-    single_match_result,
-    vectors,
-    library,
-    accelarating_voltage,
-    camera_length,
-    n_best=5,
-    rank=0,
-    index_error_tol=0.2,
-    method="leastsq",
-    vary_angles=True,
-    vary_center=False,
-    vary_scale=False,
-    verbose=False,
-):
+    single_match_result: VectorMatchingResults,
+    vectors: DiffractionVectors,
+    library: DiffractionLibrary,
+    accelarating_voltage: float,
+    camera_length: float,
+    n_best: int = 5,
+    rank: int = 0,
+    index_error_tol: float = 0.2,
+    method: str = "leastsq",
+    vary_angles: bool = True,
+    vary_center: bool = False,
+    vary_scale: bool = False,
+    verbose: bool = False,
+) -> OrientationResult:
     """
     Refine a single orientation agains the given cartesian vector coordinates.
 
@@ -328,18 +345,18 @@ def _refine_best_orientations(
 
 
 def _refine_orientation(
-    solution,
-    k_xy,
-    structure_library,
-    accelarating_voltage,
-    camera_length,
-    index_error_tol=0.2,
-    method="leastsq",
-    vary_angles=True,
-    vary_center=False,
-    vary_scale=False,
-    verbose=False,
-):
+    solution: OrientationResult,
+    k_xy: DiffractionVectors,
+    structure_library: StructureLibrary,
+    accelarating_voltage: float,
+    camera_length: float,
+    index_error_tol: float = 0.2,
+    method: str = "leastsq",
+    vary_angles: bool = True,
+    vary_center: bool = False,
+    vary_scale: bool = False,
+    verbose: bool = False,
+) -> OrientationResult:
     """
     Refine a single orientation agains the given cartesian vector coordinates.
 
@@ -484,7 +501,9 @@ class VectorIndexationGenerator:
         angles for indexation.
     """
 
-    def __init__(self, vectors, vector_library):
+    def __init__(
+        self, vectors: DiffractionVectors, vector_library: DiffractionVectorLibrary
+    ):
         if vectors.cartesian is None:
             raise ValueError(
                 "Cartesian coordinates are required in order to index "
@@ -497,14 +516,14 @@ class VectorIndexationGenerator:
 
     def index_vectors(
         self,
-        mag_tol,
-        angle_tol,
-        index_error_tol,
-        n_peaks_to_index,
-        n_best,
+        mag_tol: float,
+        angle_tol: float,
+        index_error_tol: float,
+        n_peaks_to_index: int,
+        n_best: int,
         *args,
         **kwargs,
-    ):
+    ) -> VectorMatchingResults:
         """Assigns hkl indices to diffraction vectors.
 
         Parameters
@@ -564,16 +583,16 @@ class VectorIndexationGenerator:
 
     def refine_best_orientation(
         self,
-        orientations,
-        accelarating_voltage,
-        camera_length,
-        rank=0,
-        index_error_tol=0.2,
-        vary_angles=True,
-        vary_center=False,
-        vary_scale=False,
-        method="leastsq",
-    ):
+        orientations: VectorMatchingResults,
+        accelarating_voltage: float,
+        camera_length: float,
+        rank: int = 0,
+        index_error_tol: float = 0.2,
+        vary_angles: bool = True,
+        vary_center: bool = False,
+        vary_scale: bool = False,
+        method: str = "leastsq",
+    ) -> VectorMatchingResults:
         """Refines the best orientation and assigns hkl indices to diffraction vectors.
 
         Parameters
@@ -617,17 +636,17 @@ class VectorIndexationGenerator:
 
     def refine_n_best_orientations(
         self,
-        orientations,
-        accelarating_voltage,
-        camera_length,
-        n_best=0,
-        rank=0,
-        index_error_tol=0.2,
-        vary_angles=True,
-        vary_center=False,
-        vary_scale=False,
-        method="leastsq",
-    ):
+        orientations: VectorMatchingResults,
+        accelarating_voltage: float,
+        camera_length: float,
+        n_best: int = 0,
+        rank: int = 0,
+        index_error_tol: float = 0.2,
+        vary_angles: bool = True,
+        vary_center: bool = False,
+        vary_scale: bool = False,
+        method: str = "leastsq",
+    ) -> VectorMatchingResults:
         """Refines the best orientation and assigns hkl indices to diffraction vectors.
 
         Parameters

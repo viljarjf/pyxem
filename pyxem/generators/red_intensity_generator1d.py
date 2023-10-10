@@ -17,10 +17,14 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """Reduced intensity generator and associated tools."""
+from __future__ import annotations
+from typing import Union
+
 import numpy as np
 
 from pyxem.components import ScatteringFitComponentXTables, ScatteringFitComponentLobato
 from pyxem.utils.ri_utils import subtract_pattern, mask_from_pattern
+from pyxem.signals import ElectronDiffraction1D, ReducedIntensity1D
 
 scattering_factor_dictionary = {
     "lobato": ScatteringFitComponentLobato,
@@ -37,7 +41,7 @@ class ReducedIntensityGenerator1D:
         An electron diffraction radial profile.
     """
 
-    def __init__(self, signal, *args, **kwargs):
+    def __init__(self, signal: ElectronDiffraction1D, *args, **kwargs):
         self.signal = signal
         self.cutoff = [0, signal.axes_manager.signal_axes[0].size - 1]
         self.nav_size = [
@@ -48,7 +52,7 @@ class ReducedIntensityGenerator1D:
         self.background_fit = None  # added in one of the fits below.
         self.normalisation = None
 
-    def set_diffraction_calibration(self, calibration):
+    def set_diffraction_calibration(self, calibration: float) -> None:
         """Defines calibration for the signal axis variable s in terms of
         A^-1 per pixel. Note that s is defined here as
         s = 2 sin(theta)/lambda = 1/d, where theta is the scattering angle,
@@ -61,7 +65,7 @@ class ReducedIntensityGenerator1D:
         """
         self.signal.axes_manager.signal_axes[0].scale = calibration
 
-    def set_diffraction_offset(self, offset):
+    def set_diffraction_offset(self, offset: float) -> None:
         """Defines the offset for the signal axis variable s in terms of
         A^-1 per pixel. Note that s is defined here as
         s = 2 sin(theta)/lambda = 1/d, where theta is the scattering angle,
@@ -74,7 +78,7 @@ class ReducedIntensityGenerator1D:
         """
         self.signal.axes_manager.signal_axes[0].offset = offset
 
-    def set_s_cutoff(self, s_min, s_max):
+    def set_s_cutoff(self, s_min: float, s_max: float) -> None:
         """Scattering vector cutoff for the purposes of fitting an atomic scattering
         factor to the 1D profile. Specified in terms of s (in inverse angstroms).
         s is defined as s = 2 sin(theta)/lambda = 1/d, where theta is the
@@ -92,15 +96,15 @@ class ReducedIntensityGenerator1D:
 
     def fit_atomic_scattering(
         self,
-        elements,
-        fracs,
-        N=1.0,
-        C=0.0,
-        scattering_factor="lobato",
-        plot_fit=True,
+        elements: list[str],
+        fracs: list[float],
+        N: float = 1.0,
+        C: float = 0.0,
+        scattering_factor: str = "lobato",
+        plot_fit: bool = True,
         *args,
         **kwargs,
-    ):
+    ) -> None:
         """Fits a diffraction intensity profile to the background.
 
         Uses FIT = N * sum(ci * (fi^2) + C)
@@ -158,7 +162,9 @@ class ReducedIntensityGenerator1D:
         self.background_fit = fit
         return
 
-    def subtract_bkgd_pattern(self, bkgd_pattern, inplace=True, *args, **kwargs):
+    def subtract_bkgd_pattern(
+        self, bkgd_pattern: np.ndarray, inplace: bool = True, *args, **kwargs
+    ) -> Union[None, ElectronDiffraction1D]:
         """Subtracts a background pattern from the signal.
 
         This method will edit self.signal.
@@ -181,8 +187,13 @@ class ReducedIntensityGenerator1D:
         )
 
     def mask_from_bkgd_pattern(
-        self, mask_pattern, mask_threshold=1, inplace=True, *args, **kwargs
-    ):
+        self,
+        mask_pattern: np.ndarray,
+        mask_threshold: float = 1,
+        inplace: bool = True,
+        *args,
+        **kwargs,
+    ) -> Union[None, ElectronDiffraction1D]:
         """Uses a background pattern with a threshold, and sets that part of
         the signal to zero, effectively adding a mask. This can be used to mask
         the central beam.
@@ -215,7 +226,9 @@ class ReducedIntensityGenerator1D:
             **kwargs,
         )
 
-    def mask_reduced_intensity(self, mask_pattern, inplace=True, *args, **kwargs):
+    def mask_reduced_intensity(
+        self, mask_pattern: np.ndarray, inplace: bool = True, *args, **kwargs
+    ) -> Union[None, ElectronDiffraction1D]:
         """Masks the reduced intensity signal by multiplying it with a pattern
         consisting of only zeroes and ones. This can be used to mask
         the central beam.
@@ -248,7 +261,7 @@ class ReducedIntensityGenerator1D:
             mask_from_pattern, pattern=mask_array, inplace=inplace, *args, **kwargs
         )
 
-    def get_reduced_intensity(self):
+    def get_reduced_intensity(self) -> ReducedIntensity1D:
         """Obtains a reduced intensity profile from the radial profile.
 
         Parameters

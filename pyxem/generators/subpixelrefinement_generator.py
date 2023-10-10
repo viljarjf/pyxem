@@ -17,15 +17,19 @@
 # along with pyXem.  If not, see <http://www.gnu.org/licenses/>.
 
 """Generating subpixel resolution on diffraction vectors."""
+from __future__ import annotations
+from typing import Union
 
 import numpy as np
 from skimage.registration import phase_cross_correlation
 from skimage import draw
 
-from pyxem.signals import DiffractionVectors
+from pyxem.signals import DiffractionVectors, ElectronDiffraction2D
 
 
-def get_experimental_square(z, vector, square_size):
+def get_experimental_square(
+    z: np.ndarray, vector: np.ndarray, square_size: int
+) -> np.ndarray:
     """Defines a square region around a given diffraction vector and returns.
 
     Parameters
@@ -52,7 +56,7 @@ def get_experimental_square(z, vector, square_size):
     return _z
 
 
-def get_simulated_disc(square_size, disc_radius):
+def get_simulated_disc(square_size: int, disc_radius: int) -> np.ndarray:
     """Create a uniform disc for correlating with the experimental square.
 
     Parameters
@@ -81,7 +85,12 @@ def get_simulated_disc(square_size, disc_radius):
     return arr
 
 
-def _get_pixel_vectors(dp, vectors, calibration, center):
+def _get_pixel_vectors(
+    dp: ElectronDiffraction2D,
+    vectors: Union[DiffractionVectors, np.ndarray],
+    calibration: tuple[float, float],
+    center: tuple[float, float],
+) -> DiffractionVectors:
     """Get the pixel coordinates for the given diffraction
     pattern and vectors.
 
@@ -157,7 +166,9 @@ def _get_pixel_vectors(dp, vectors, calibration, center):
     return vector_pixels
 
 
-def _conventional_xc(exp_disc, sim_disc, upsample_factor):
+def _conventional_xc(
+    exp_disc: np.ndarray, sim_disc: np.ndarray, upsample_factor: int
+) -> np.ndarray:
     """Takes two images of disc and finds the shift between them using
     conventional (phase) cross correlation.
 
@@ -185,7 +196,7 @@ def _conventional_xc(exp_disc, sim_disc, upsample_factor):
     return shifts
 
 
-def _center_of_mass_hs(z):
+def _center_of_mass_hs(z: np.ndarray) -> tuple[float, float]:
     """Return the center of mass of an array with coordinates in the
     hyperspy convention
 
@@ -210,7 +221,9 @@ def _center_of_mass_hs(z):
     return cx, cy
 
 
-def _com_experimental_square(z, vector, square_size):
+def _com_experimental_square(
+    z: np.ndarray, vector: np.ndarray, square_size: int
+) -> np.ndarray:
     """Wrapper for get_experimental_square that makes the non-zero
     elements symmetrical around the 'unsubpixeled' peak by zeroing a
     'spare' row and column (top and left).
@@ -235,7 +248,13 @@ def _com_experimental_square(z, vector, square_size):
     return z_adpt
 
 
-def _center_of_mass_map(dp, vectors, square_size, center, calibration):
+def _center_of_mass_map(
+    dp: np.ndarray,
+    vectors: np.ndarray,
+    square_size: int,
+    center: float,
+    calibration: float,
+) -> np.ndarray:
     if vectors.shape == (2,):
         vectors = [
             vectors,
@@ -267,7 +286,9 @@ class SubpixelrefinementGenerator:
 
     """
 
-    def __init__(self, dp, vectors):
+    def __init__(
+        self, dp: ElectronDiffraction2D, vectors: Union[DiffractionVectors, np.ndarray]
+    ):
         self.dp = dp
         self.vectors_init = vectors
         self.last_method = None
@@ -279,7 +300,9 @@ class SubpixelrefinementGenerator:
             dp, vectors, calibration=self.calibration, center=self.center
         )
 
-    def conventional_xc(self, square_size, disc_radius, upsample_factor):
+    def conventional_xc(
+        self, square_size: int, disc_radius: int, upsample_factor: int
+    ) -> DiffractionVectors:
         """Refines the peaks using (phase) cross correlation.
 
         Parameters
@@ -325,7 +348,9 @@ class SubpixelrefinementGenerator:
         self.last_method = "conventional_xc"
         return self.vectors_out
 
-    def reference_xc(self, square_size, reference_dp, upsample_factor):
+    def reference_xc(
+        self, square_size: int, reference_dp: np.ndarray, upsample_factor: int
+    ) -> DiffractionVectors:
         """Refines the peaks using (phase) cross correlation with a reference
         diffraction image.
 
@@ -369,7 +394,7 @@ class SubpixelrefinementGenerator:
         self.last_method = "reference_xc"
         return self.vectors_out
 
-    def center_of_mass_method(self, square_size):
+    def center_of_mass_method(self, square_size: int) -> DiffractionVectors:
         """Find the subpixel refinement of a peak by assuming it lies at the
         center of intensity.
 
